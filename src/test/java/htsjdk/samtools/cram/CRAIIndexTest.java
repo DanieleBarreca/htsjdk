@@ -20,7 +20,7 @@ import java.util.zip.GZIPOutputStream;
 public class CRAIIndexTest extends HtsjdkTest {
 
     @Test
-    public void testFind() throws CloneNotSupportedException {
+    public void testFind() {
         final List<CRAIEntry> index = new ArrayList<>();
 
         final int sequenceId = 1;
