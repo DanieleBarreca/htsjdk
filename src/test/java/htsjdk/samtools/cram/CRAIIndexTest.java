@@ -20,8 +20,8 @@ import java.util.zip.GZIPOutputStream;
 public class CRAIIndexTest extends HtsjdkTest {
 
     @Test
-    public void testFind() throws IOException, CloneNotSupportedException {
-        final List<CRAIEntry> index = new ArrayList<CRAIEntry>();
+    public void testFind() throws CloneNotSupportedException {
+        final List<CRAIEntry> index = new ArrayList<>();
 
         final int sequenceId = 1;
         CRAIEntry e = new CRAIEntry();
@@ -121,22 +121,17 @@ public class CRAIIndexTest extends HtsjdkTest {
     }
 
     public SeekableStream getBaiStreamFromMemory(SAMSequenceDictionary dictionary, final List<CRAIEntry> index) {
-        try {
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            SAMFileHeader samHeader = new SAMFileHeader();
-            samHeader.setSortOrder(SAMFileHeader.SortOrder.coordinate);
-            CRAMCRAIIndexer indexer = new CRAMCRAIIndexer(baos, samHeader);
-            for (CRAIEntry entry: index) {
-                indexer.addEntry(entry);
-            }
-            indexer.finish();
-            final SeekableStream baiStream = CRAIIndex.openCraiFileAsBaiStream(new ByteArrayInputStream(baos.toByteArray()), dictionary);
-            Assert.assertNotNull(baiStream);
-            return baiStream;
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        SAMFileHeader samHeader = new SAMFileHeader();
+        samHeader.setSortOrder(SAMFileHeader.SortOrder.coordinate);
+        CRAMCRAIIndexer indexer = new CRAMCRAIIndexer(baos, samHeader);
+        for (CRAIEntry entry : index) {
+            indexer.addEntry(entry);
         }
-        catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+        indexer.finish();
+        final SeekableStream baiStream = CRAIIndex.openCraiFileAsBaiStream(new ByteArrayInputStream(baos.toByteArray()), dictionary);
+        Assert.assertNotNull(baiStream);
+        return baiStream;
     }
 
     private SeekableStream getBaiStreamFromFile(SAMSequenceDictionary dictionary, final List<CRAIEntry> index) {
