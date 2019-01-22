@@ -4,6 +4,7 @@ import htsjdk.HtsjdkTest;
 import htsjdk.samtools.FileTruncatedException;
 import htsjdk.samtools.cram.io.InputStreamUtils;
 import htsjdk.samtools.seekablestream.SeekableFileStream;
+import htsjdk.samtools.util.blockcompression.BlockCompressedOutputStreamFactory;
 import htsjdk.samtools.util.zip.InflaterFactory;
 import org.testng.Assert;
 import org.testng.annotations.DataProvider;
@@ -130,7 +131,7 @@ public class BlockCompressedInputStreamTest extends HtsjdkTest {
 
     private List<String> writeTempBlockCompressedFileForInflaterTest( final File tempFile ) throws IOException {
         final List<String> linesWritten = new ArrayList<>();
-        try ( final BlockCompressedOutputStream bcos = new BlockCompressedOutputStream(tempFile, 5) ) {
+        try ( final OutputStream bcos = BlockCompressedOutputStreamFactory.makeBlockCompressedOutputStream(tempFile) ) {
             String s = "Hi, Mom!\n";
             bcos.write(s.getBytes()); //Call 1
             linesWritten.add(s);

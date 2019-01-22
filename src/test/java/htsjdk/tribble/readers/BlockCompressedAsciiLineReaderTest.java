@@ -3,13 +3,20 @@ package htsjdk.tribble.readers;
 import htsjdk.HtsjdkTest;
 import htsjdk.samtools.util.BlockCompressedFilePointerUtil;
 import htsjdk.samtools.util.BlockCompressedInputStream;
-import htsjdk.samtools.util.BlockCompressedOutputStream;
+import htsjdk.samtools.util.blockcompression.BlockCompressedOutputStream;
+import htsjdk.samtools.util.blockcompression.BlockCompressedParallelOutputStream;
+import htsjdk.samtools.util.blockcompression.DefaultBlockCompressedOutputStream;
+import htsjdk.samtools.util.blockcompression.BlockCompressedOutputStreamFactory;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
+import java.io.OutputStream;
+import java.nio.file.Path;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
 
 public class BlockCompressedAsciiLineReaderTest extends HtsjdkTest {
 
@@ -59,13 +66,16 @@ public class BlockCompressedAsciiLineReaderTest extends HtsjdkTest {
     private long populateMultiBlockCompressedFile(final File tempBlockCompressedFile) throws IOException {
         long sentinelLineOffset = -1;
 
-        try (BlockCompressedOutputStream bcos = new BlockCompressedOutputStream(tempBlockCompressedFile)) {
+        try (OutputStream bcos = BlockCompressedOutputStreamFactory.makeBlockCompressedOutputStream(tempBlockCompressedFile)) {
             // write lines until we exceed the size of the first block (block address != 0)
-            do {
-                bcos.write("Write this line enough times to exceed the size or a compressed block\n".getBytes());
-            } while (BlockCompressedFilePointerUtil.getBlockAddress(bcos.getFilePointer()) == 0);
+            Assert.assertTrue(bcos instanceof BlockCompressedOutputStream);
 
-            sentinelLineOffset = bcos.getFilePointer();
+            BlockCompressedOutputStream stream = (BlockCompressedOutputStream) bcos;
+            do {
+                stream.write("Write this line enough times to exceed the size or a compressed block\n".getBytes());
+            } while (BlockCompressedFilePointerUtil.getBlockAddress(stream.getPosition()) == 0);
+
+            sentinelLineOffset = stream.getPosition();
 
             // write a terminating line that is guaranteed to not be in the first block
             bcos.write(sentinelLine.getBytes());
