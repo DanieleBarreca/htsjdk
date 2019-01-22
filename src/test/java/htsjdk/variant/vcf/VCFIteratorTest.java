@@ -34,13 +34,11 @@ import java.nio.file.Paths;
 import java.util.function.Function;
 import java.util.zip.GZIPOutputStream;
 
+import htsjdk.samtools.util.blockcompression.BlockCompressedOutputStreamFactory;
 import org.testng.Assert;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
-import htsjdk.samtools.util.BlockCompressedInputStream;
-import htsjdk.samtools.util.BlockCompressedOutputStream;
-import htsjdk.samtools.util.CloserUtil;
 import htsjdk.samtools.util.IOUtil;
 import htsjdk.samtools.util.RuntimeIOException;
 import htsjdk.variant.VariantBaseTest;
@@ -112,7 +110,7 @@ public class VCFIteratorTest extends VariantBaseTest {
 
     @Test(dataProvider = "VcfFiles")
     public void testUsingBGZippedInput(final String filepath, final int nVariants) throws IOException {
-        testUsingZippedInput(filepath, nVariants, (F)-> new BlockCompressedOutputStream(F));
+        testUsingZippedInput(filepath, nVariants, (F)-> BlockCompressedOutputStreamFactory.makeBlockCompressedOutputStream(F));
     }
 
     @Test(dataProvider = "VcfFiles")

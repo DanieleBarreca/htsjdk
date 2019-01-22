@@ -23,7 +23,7 @@
  */
 package htsjdk.samtools.util.zip;
 
-import htsjdk.samtools.util.BlockCompressedOutputStream;
+import htsjdk.samtools.util.blockcompression.BlockCompressedOutputStream;
 import java.util.zip.Deflater;
 
 /**

@@ -40,7 +40,7 @@ import java.util.concurrent.Semaphore;
 import java.util.concurrent.ThreadFactory;
 
 /**
- * Asynchronous read-ahead implementation of {@link htsjdk.samtools.util.BlockCompressedInputStream}.   
+ * Asynchronous read-ahead implementation of {@link htsjdk.samtools.util.BlockCompressedInputStream}.
  * 
  * Note that this implementation is not synchronized. If multiple threads access an instance concurrently, it must be synchronized externally. 
  */
