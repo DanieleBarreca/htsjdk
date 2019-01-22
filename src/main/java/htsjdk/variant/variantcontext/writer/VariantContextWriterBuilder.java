@@ -27,10 +27,10 @@ package htsjdk.variant.variantcontext.writer;
 
 import htsjdk.samtools.Defaults;
 import htsjdk.samtools.SAMSequenceDictionary;
-import htsjdk.samtools.util.BlockCompressedOutputStream;
 import htsjdk.samtools.util.IOUtil;
 import htsjdk.samtools.util.Md5CalculatingOutputStream;
 import htsjdk.samtools.util.RuntimeIOException;
+import htsjdk.samtools.util.blockcompression.BlockCompressedOutputStreamFactory;
 import htsjdk.tribble.index.IndexCreator;
 import htsjdk.tribble.index.tabix.TabixFormat;
 import htsjdk.tribble.index.tabix.TabixIndexCreator;
@@ -467,7 +467,7 @@ public class VariantContextWriterBuilder {
                     idxCreator = new TabixIndexCreator(refDict, TabixFormat.VCF);
 
                 writer = createVCFWriter(
-                    outPath, new BlockCompressedOutputStream(outStreamFromFile, outPath));
+                    outPath, BlockCompressedOutputStreamFactory.makeBlockCompressedOutputStream(outStreamFromFile, outPath));
                 break;
             case BCF:
                 if ((refDict == null) && (options.contains(Options.INDEX_ON_THE_FLY)))

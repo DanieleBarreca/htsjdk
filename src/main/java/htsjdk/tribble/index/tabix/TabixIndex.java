@@ -28,11 +28,11 @@ import htsjdk.samtools.BinningIndexContent;
 import htsjdk.samtools.Chunk;
 import htsjdk.samtools.LinearIndex;
 import htsjdk.samtools.util.BlockCompressedInputStream;
-import htsjdk.samtools.util.BlockCompressedOutputStream;
 import htsjdk.samtools.util.CloserUtil;
 import htsjdk.samtools.util.IOUtil;
 import htsjdk.samtools.util.Log;
 import htsjdk.samtools.util.StringUtil;
+import htsjdk.samtools.util.blockcompression.BlockCompressedOutputStreamFactory;
 import htsjdk.tribble.Tribble;
 import htsjdk.tribble.TribbleException;
 import htsjdk.tribble.index.Block;
@@ -215,7 +215,7 @@ public class TabixIndex implements Index {
      */
     @Override
     public void write(final Path tabixPath) throws IOException {
-        try(final LittleEndianOutputStream los = new LittleEndianOutputStream(new BlockCompressedOutputStream(Files.newOutputStream(tabixPath), (Path)null))) {
+        try(final LittleEndianOutputStream los = new LittleEndianOutputStream(BlockCompressedOutputStreamFactory.makeBlockCompressedOutputStream(Files.newOutputStream(tabixPath), (Path)null))) {
             write(los);
         }
     }

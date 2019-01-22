@@ -25,9 +25,9 @@ package htsjdk.tribble.index.tabix;
 
 import htsjdk.HtsjdkTest;
 import com.google.common.io.Files;
-import htsjdk.samtools.util.BlockCompressedOutputStream;
 import htsjdk.samtools.util.IOUtil;
 import htsjdk.samtools.util.Interval;
+import htsjdk.samtools.util.blockcompression.BlockCompressedOutputStreamFactory;
 import htsjdk.tribble.AbstractFeatureReader;
 import htsjdk.tribble.FeatureReader;
 import htsjdk.tribble.TestUtils;
@@ -66,7 +66,7 @@ public class TabixIndexTest extends HtsjdkTest {
         final TabixIndex index = new TabixIndex(tabixFile);
         final File indexFile = File.createTempFile("TabixIndexTest.", TabixUtils.STANDARD_INDEX_EXTENSION);
         indexFile.deleteOnExit();
-        final LittleEndianOutputStream los = new LittleEndianOutputStream(new BlockCompressedOutputStream(indexFile));
+        final LittleEndianOutputStream los = new LittleEndianOutputStream(BlockCompressedOutputStreamFactory.makeBlockCompressedOutputStream(indexFile));
         index.write(los);
         los.close();
         final TabixIndex index2 = new TabixIndex(indexFile);

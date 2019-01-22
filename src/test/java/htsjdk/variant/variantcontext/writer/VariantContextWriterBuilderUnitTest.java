@@ -29,7 +29,7 @@ import com.google.common.jimfs.Configuration;
 import com.google.common.jimfs.Jimfs;
 import htsjdk.samtools.Defaults;
 import htsjdk.samtools.SAMSequenceDictionary;
-import htsjdk.samtools.util.BlockCompressedOutputStream;
+import htsjdk.samtools.util.blockcompression.BlockCompressedOutputStream;
 import htsjdk.samtools.util.IOUtil;
 import htsjdk.tribble.Tribble;
 import htsjdk.tribble.util.TabixUtils;

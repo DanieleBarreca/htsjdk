@@ -2,13 +2,13 @@ package htsjdk.samtools;
 
 import htsjdk.samtools.util.BlockCompressedFilePointerUtil;
 import htsjdk.samtools.util.BlockCompressedInputStream;
-import htsjdk.samtools.util.BlockCompressedOutputStream;
 import htsjdk.samtools.util.BlockCompressedStreamConstants;
 import htsjdk.samtools.util.CloserUtil;
 import htsjdk.samtools.util.IOUtil;
 import htsjdk.samtools.util.Log;
 import htsjdk.samtools.util.Md5CalculatingOutputStream;
 import htsjdk.samtools.util.RuntimeIOException;
+import htsjdk.samtools.util.blockcompression.BlockCompressedOutputStreamFactory;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -87,7 +87,7 @@ public class BamFileIoUtils {
                 // If we found the end of the header then write the remainder of this block out as a
                 // new gzip block and then break out of the while loop
                 if (remainingInBlock >= 0) {
-                    final BlockCompressedOutputStream blockOut = new BlockCompressedOutputStream(outputStream, (Path)null);
+                    final OutputStream blockOut = BlockCompressedOutputStreamFactory.makeBlockCompressedOutputStream(outputStream, (Path)null);
                     IOUtil.transferByStream(blockIn, blockOut, remainingInBlock);
                     blockOut.flush();
                     // Don't close blockOut because closing underlying stream would break everything

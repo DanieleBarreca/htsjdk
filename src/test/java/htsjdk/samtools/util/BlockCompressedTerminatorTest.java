@@ -26,7 +26,7 @@ package htsjdk.samtools.util;
 import com.google.common.jimfs.Configuration;
 import com.google.common.jimfs.Jimfs;
 import htsjdk.HtsjdkTest;
-import htsjdk.samtools.SeekableByteChannelFromBuffer;
+import htsjdk.samtools.util.blockcompression.BlockCompressedOutputStreamFactory;
 import org.testng.Assert;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
@@ -34,12 +34,12 @@ import org.testng.annotations.Test;
 import java.io.EOFException;
 import java.io.File;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.nio.channels.SeekableByteChannel;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Arrays;
 
 /**
  * @author alecw@broadinstitute.org
@@ -92,7 +92,7 @@ public class BlockCompressedTerminatorTest extends HtsjdkTest {
     private static File getValidCompressedFile() throws IOException {
         final File tmpCompressedFile = File.createTempFile("test.", ".bgzf");
         tmpCompressedFile.deleteOnExit();
-        final BlockCompressedOutputStream os = new BlockCompressedOutputStream(tmpCompressedFile);
+        final OutputStream os = BlockCompressedOutputStreamFactory.makeBlockCompressedOutputStream(tmpCompressedFile);
         os.write("Hi, Mom!\n".getBytes());
         os.close();
         return tmpCompressedFile;
