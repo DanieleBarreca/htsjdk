@@ -1,5 +1,7 @@
 package htsjdk.samtools.util.blockcompression;
 
+import htsjdk.samtools.util.Log;
+
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -7,6 +9,7 @@ import java.util.zip.CRC32;
 import java.util.zip.Deflater;
 
 public class BlockDeflaterCallable implements Runnable {
+    private static final Log log = Log.getInstance(BlockDeflaterCallable.class);
 
 
     private final Deflater deflater;
@@ -35,7 +38,7 @@ public class BlockDeflaterCallable implements Runnable {
     }
 
     public void run() {
-        while (!input.isDone() || input.size() != 0) {
+        while (!input.isError() && (!input.isDone() || input.size() != 0)) {
 
             try {
                 CompressedBlock block = input.take();
@@ -68,10 +71,12 @@ public class BlockDeflaterCallable implements Runnable {
                     block.complete(CompressedBlock.BlockStatus.DEFLATED);
                 } catch (Throwable e) {
                     block.complete(CompressedBlock.BlockStatus.ERROR);
-                    e.printStackTrace();
+                    log.error(e,"Error while processing block ",block.id);
                 }
             } catch (InterruptedException e) {
-                e.printStackTrace();
+                input.setError();
+                log.error(e,"Task was interrupted");
+
             }
         }
 
@@ -80,6 +85,7 @@ public class BlockDeflaterCallable implements Runnable {
     public static class TaskQueue extends ArrayBlockingQueue<CompressedBlock> {
 
         private AtomicBoolean isDone = new AtomicBoolean(false);
+        private AtomicBoolean isError= new AtomicBoolean(false);
 
         public TaskQueue(int capacity) {
             super(capacity);
@@ -119,6 +125,14 @@ public class BlockDeflaterCallable implements Runnable {
 
         public void setDone() {
             isDone.set(true);
+        }
+
+        public boolean isError() {
+            return isError.get();
+        }
+
+        public void setError() {
+            this.isError.set(true);
         }
     }
 

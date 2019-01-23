@@ -126,11 +126,12 @@ public class BlockCompressedParallelOutputStream extends BlockCompressedOutputSt
     }
 
     private synchronized void blockWhileWriting(){
-        while (!this.error.get() && this.lastSubmittedBlock!=this.lastWrittenBlock){}
+        while (!this.error.get() && !this.deflateQueue.isError() && this.lastSubmittedBlock!=this.lastWrittenBlock){}
     }
 
     private void check() throws IOException {
         if (this.error.get()) throw new IOException("Stream has been corrupted");
+        if (this.deflateQueue.isError()) throw new IOException("The workers have been interrupted");
         if (this.flushing.get()) throw new IOException("The stream is flushing data");
         if (this.closed.get()  || this.closing.get()) throw new IOException("The stream has been closed");
     }
@@ -165,9 +166,10 @@ public class BlockCompressedParallelOutputStream extends BlockCompressedOutputSt
         }
 
         while ( (this.flushing.get() || (close && this.closing.get())) &&
-                !this.error.get() ){}
+                !this.error.get() && !this.deflateQueue.isError() ){}
 
         if (this.error.get()) throw new IOException("Stream has been corrupted");
+        if (this.deflateQueue.isError()) throw new IOException("The workers have been interrupted");
 
     }
 
@@ -212,7 +214,7 @@ public class BlockCompressedParallelOutputStream extends BlockCompressedOutputSt
         if (this.error.get()) return;
 
         if (CompressedBlock.BlockStatus.ERROR.equals(completedBlock.getStatus())) {
-            log.error(constructErrorMessage("Write error"), "ERROR WHILE DEFLATING BLOCK");
+            log.error(constructErrorMessage("Write error"), "Error while deflating block ",completedBlock.id);
             closeExceptionally();
         }else if (CompressedBlock.BlockStatus.DEFLATED.equals(completedBlock.getStatus())) {
             synchronized (blocksPendingWriting) {
@@ -231,9 +233,8 @@ public class BlockCompressedParallelOutputStream extends BlockCompressedOutputSt
                             this.notifyBlockWritten();
                             blockIterator.remove();
                         } catch (Throwable e) {
-                            e.printStackTrace();
+                            log.error(constructErrorMessage("Write error"), "Error while writing block to disk ",block.id);
                             block.setStatus(CompressedBlock.BlockStatus.ERROR);
-                            log.error(constructErrorMessage(e), e);
                             closeExceptionally();
                             break;
                         }
