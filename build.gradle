@@ -51,7 +51,10 @@ targetCompatibility = 1.8
 
 final isRelease = Boolean.getBoolean("release")
 final gitVersion = gitVersion().replaceAll(".dirty", "")
-version = isRelease ? gitVersion : gitVersion + "-SNAPSHOT"
+
+//version = isRelease ? gitVersion : gitVersion + "-SNAPSHOT"
+
+version = gitVersion
 
 logger.info("build for version:" + version)
 group = 'com.github.samtools'
