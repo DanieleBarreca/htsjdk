@@ -245,9 +245,16 @@ public class SortingCollection<T> implements Iterable<T> {
      */
     public void spillToDisk() {
         try {
-            Arrays.parallelSort(this.ramRecords, 0, this.numRecordsInRam, this.comparator);
+
+            long startTime = System.currentTimeMillis();
+            Arrays.parallelSort(SortingCollection.this.ramRecords,
+                    0,
+                    SortingCollection.this.numRecordsInRam,
+                    SortingCollection.this.comparator);
+            long sortTime = System.currentTimeMillis()-startTime;
 
             final Path f = newTempFile();
+
             try (OutputStream os
                          = tempStreamFactory.wrapTempOutputStream(Files.newOutputStream(f), Defaults.BUFFER_SIZE)) {
                 this.codec.setOutputStream(os);
@@ -261,6 +268,16 @@ public class SortingCollection<T> implements Iterable<T> {
                 throw new RuntimeIOException("Problem writing temporary file " + f.toUri() +
                         ".  Try setting TMP_DIR to a file system with lots of space.", ex);
             }
+
+
+            log.info(
+                    String.format("Spilling to disk...Sorting %d elements took %d ms. Total time for writing was: %d ms. Filename: %s.",
+                            SortingCollection.this.numRecordsInRam,
+                            sortTime,
+                            (System.currentTimeMillis() - startTime),
+                            f.toString()
+                    )
+            );
 
             this.numRecordsInRam = 0;
             this.files.add(f);
@@ -292,8 +309,10 @@ public class SortingCollection<T> implements Iterable<T> {
 
         this.iterationStarted = true;
         if (this.files.isEmpty()) {
+            log.info("Creating InMemoryIterator");
             return new InMemoryIterator();
         } else {
+            log.info( "Creating MergingIterator");
             return new MergingIterator();
         }
     }
@@ -452,10 +471,12 @@ public class SortingCollection<T> implements Iterable<T> {
         private int iterationIndex = 0;
 
         InMemoryIterator() {
+            long startTime = System.currentTimeMillis();
             Arrays.parallelSort(SortingCollection.this.ramRecords,
                     0,
                     SortingCollection.this.numRecordsInRam,
                     SortingCollection.this.comparator);
+            log.info(String.format("Sorting %d elements took %d ms",SortingCollection.this.numRecordsInRam, (System.currentTimeMillis()-startTime)));
         }
 
         @Override
