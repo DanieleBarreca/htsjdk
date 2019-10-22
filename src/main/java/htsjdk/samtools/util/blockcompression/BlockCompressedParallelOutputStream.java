@@ -174,25 +174,28 @@ public class BlockCompressedParallelOutputStream extends BlockCompressedOutputSt
     }
 
 
-    private void closeInternal() throws IOException{
-        try {
-            codec.writeBytes(BlockCompressedStreamConstants.EMPTY_GZIP_BLOCK);
-            codec.close();
+    private synchronized void closeInternal() throws IOException{
+        
+        if (!this.closed.get()) {
+            try {
+                codec.writeBytes(BlockCompressedStreamConstants.EMPTY_GZIP_BLOCK);
+                codec.close();
 
-            // Can't re-open something that is not a regular file, e.g. a named pipe or an output stream
-            if (this.file == null || !Files.isRegularFile(this.file)) return;
+                // Can't re-open something that is not a regular file, e.g. a named pipe or an output stream
+                if (this.file == null || !Files.isRegularFile(this.file)) return;
 
-            if (BlockCompressedInputStream.checkTermination(this.file) !=
-                    BlockCompressedInputStream.FileTermination.HAS_TERMINATOR_BLOCK) {
-                throw new IOException("Terminator block not found after closing BGZF file " + this.file);
+                if (BlockCompressedInputStream.checkTermination(this.file) !=
+                        BlockCompressedInputStream.FileTermination.HAS_TERMINATOR_BLOCK) {
+                    throw new IOException("Terminator block not found after closing BGZF file " + this.file);
+                }
+
+            } catch (Throwable e) {
+                log.error(constructErrorMessage(e), e);
+                closeExceptionally(e);
+            } finally {
+                this.closed.set(true);
+                this.closing.set(false);
             }
-
-        }catch (Throwable e){
-            log.error(constructErrorMessage(e), e);
-            closeExceptionally(e);
-        } finally {
-            this.closed.set(true);
-            this.closing.set(false);
         }
     }
 
@@ -233,7 +236,7 @@ public class BlockCompressedParallelOutputStream extends BlockCompressedOutputSt
                             this.notifyBlockWritten();
                             blockIterator.remove();
                         } catch (Throwable e) {
-                            log.error(constructErrorMessage("Write error"), "Error while writing block to disk ",block.id);
+                            log.error(e,constructErrorMessage("Write error"), "Error while writing block to disk ",block.id);
                             block.setStatus(CompressedBlock.BlockStatus.ERROR);
                             closeExceptionally();
                             break;
@@ -312,8 +315,13 @@ public class BlockCompressedParallelOutputStream extends BlockCompressedOutputSt
     }
 
     private String constructErrorMessage(final String msg) {
-        final StringBuilder sb = new StringBuilder(msg);
-        sb.append("; ParallelBamOutputStream ");
+        final StringBuilder sb;
+        if (msg != null) {
+            sb = new StringBuilder(msg).append("; ");
+        }else{
+            sb = new StringBuilder();
+        }
+        sb.append("BlockCompressedParallelOutputStream ");
         if (file != null) {
             sb.append("file: ").append(file.getFileName());
         } else  {
